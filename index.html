@@ -1,0 +1,1364 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5CFD6">
+<title>Pips-Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Caveat:wght@500;700&family=Figtree:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: Erdbeermilch-Rosa mit Punktmuster; eine Sticker-Karte führt durch 13 Spiele, unten sammelt sich der Wortschatz */
+:root{
+  --ground:#F5CFD6;
+  --dot:#EBB3BF;
+  --paper:#FFF6F7;
+  --blush:#FCE3E8;
+  --cherry:#C4122F;
+  --cherry-soft:#E6586E;
+  --ink:#3B1420;
+  --muted:#7E4E5A;
+  --grey:#A9959D;
+  --horse:#C08A5C;
+  --horse-light:#EBCFAE;
+  --mane:#6E4128;
+  --font-display:"Caprasimo","Cooper Black","Cooper Std",Georgia,serif;
+  --font-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-hand:"Caveat","Segoe Print","Bradley Hand","Comic Sans MS",cursive;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top, 0px);padding-bottom:env(safe-area-inset-bottom, 0px)}
+html{height:100%;touch-action:manipulation}
+body{
+  margin:0;
+  min-height:100%;
+  background-color:var(--ground);
+  background-image:radial-gradient(var(--dot) 1.6px, transparent 1.9px);
+  background-size:22px 22px;
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.45;
+  display:grid;
+  justify-items:center;
+  align-content:start;
+  padding-block:14px 28px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  -webkit-tap-highlight-color:transparent;
+  overscroll-behavior-y:none;
+}
+@media (min-width:600px){ body{align-content:center;padding-block:32px} }
+
+.card{
+  width:100%;
+  max-width:440px;
+  background:var(--paper);
+  border:2.5px solid var(--ink);
+  border-radius:24px;
+  box-shadow:6px 6px 0 var(--ink);
+  padding:16px 16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-touch-callout:none;
+}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.step-label{font-size:.75rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.segs{display:flex;gap:3px;width:min(170px, 48%)}
+.segs i{flex:1;height:9px;border-radius:3px;border:1.5px solid var(--ink);background:var(--paper);transition:background .3s}
+.segs i.now{background:var(--blush)}
+.segs i.on{background:var(--cherry)}
+
+.screen{display:flex;flex-direction:column;gap:16px}
+.head{display:grid;gap:4px}
+h1,h2{font-family:var(--font-display);font-weight:400;margin:0;line-height:1.08;text-wrap:balance}
+h1{font-size:clamp(2.4rem, 11.5vw, 3.2rem);color:var(--cherry);letter-spacing:-.01em}
+h2{font-size:clamp(1.45rem, 6.4vw, 1.75rem)}
+.hint{margin:0;color:var(--muted);font-size:.95rem;text-wrap:pretty}
+.lead{margin:0;font-size:1.05rem;max-width:36ch;text-wrap:pretty}
+.eyebrow{margin:0;font-size:.75rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.game{display:flex;flex-direction:column;gap:14px}
+.feedback{margin:0;min-height:1.45em;font-weight:800;color:var(--cherry);text-wrap:balance}
+
+.btn{
+  font-family:var(--font-display);
+  font-size:1.15rem;
+  line-height:1.1;
+  padding:15px 26px;
+  border-radius:999px;
+  border:2.5px solid var(--ink);
+  box-shadow:3px 3px 0 var(--ink);
+  cursor:pointer;
+  transform:scale(var(--grow,1));
+  transition:transform .25s ease, box-shadow .12s ease, background-color .2s, opacity .3s;
+  touch-action:manipulation;
+}
+.btn:active{transform:translate(2px,2px) scale(var(--grow,1));box-shadow:1px 1px 0 var(--ink)}
+.btn:focus-visible,.tile:focus-visible,.chip:focus-visible,.mcard:focus-visible,.cup:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.btn:disabled{cursor:default}
+.btn-primary{background:var(--cherry);color:var(--paper)}
+.btn-secondary{background:var(--paper);color:var(--ink)}
+.btn-wide{align-self:stretch;white-space:nowrap}
+.btn-row{display:flex;flex-direction:column;gap:10px}
+
+/* Start */
+.title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.start-heart{width:62px;height:auto;flex:none;overflow:visible;animation:beat 1.6s ease-in-out infinite;transform-origin:50% 60%}
+@keyframes beat{0%,100%{transform:scale(1)}14%{transform:scale(1.1)}28%{transform:scale(1)}42%{transform:scale(1.06)}56%{transform:scale(1)}}
+.greet{margin:0;font-family:var(--font-hand);font-size:2.2rem;font-weight:700;line-height:1;color:var(--cherry);transform:rotate(-2deg);transform-origin:left center}
+.start .lead + .lead{margin-top:-6px}
+
+/* Wortschatz */
+.tray{display:flex;align-items:center;gap:12px;border-top:2px dashed var(--dot);padding-top:12px;min-width:0}
+.tray-label{flex:none;font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);line-height:1.2}
+.tray-label b{display:block;font-family:var(--font-display);font-weight:400;font-size:1.1rem;color:var(--ink);letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:6px;overflow-x:auto;min-width:0;padding:2px 2px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips:empty::after{content:"Noch leer. Gewinn das erste Spiel!";color:var(--muted);font-size:.85rem;white-space:nowrap}
+.chip{
+  font-family:var(--font-body);font-weight:800;font-size:1rem;line-height:1.1;
+  padding:8px 12px;border:2px solid var(--ink);border-radius:10px;
+  background:var(--paper);color:var(--ink);box-shadow:2px 2px 0 var(--ink);
+  cursor:pointer;white-space:nowrap;touch-action:manipulation;
+}
+.chips .chip{flex:none;font-size:.88rem;padding:5px 9px;box-shadow:none;cursor:default;background:var(--blush)}
+.chip.new{animation:popin .45s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popin{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+
+/* Wort freigeschaltet */
+.reveal{align-items:center;text-align:center;padding-block:8px}
+.big-word{
+  font-family:var(--font-display);font-size:clamp(2.2rem, 11vw, 3rem);line-height:1.05;color:var(--cherry);
+  padding:16px 28px;border:2.5px solid var(--ink);border-radius:18px;background:var(--blush);
+  box-shadow:5px 5px 0 var(--ink);transform:rotate(-2.5deg);max-width:100%;overflow-wrap:anywhere;
+}
+.big-word.pop{animation:wordin .6s cubic-bezier(.34,1.56,.64,1)}
+@keyframes wordin{from{transform:rotate(-14deg) scale(.2);opacity:0}to{transform:rotate(-2.5deg) scale(1);opacity:1}}
+.reveal .btn-wide{align-self:stretch}
+
+/* Spiel: Herzen */
+.field{
+  position:relative;height:300px;border:2.5px solid var(--ink);border-radius:18px;background:var(--blush);
+  overflow:hidden;touch-action:manipulation;
+}
+.field.ouch{animation:shake .3s}
+.heart{position:absolute;left:0;top:0;padding:0;border:0;background:none;cursor:pointer;will-change:transform;touch-action:manipulation}
+.heart svg{display:block;width:100%;height:auto;overflow:visible}
+.heart.pop svg{animation:pop .22s ease-out forwards}
+@keyframes pop{to{transform:scale(1.6);opacity:0}}
+.plus{position:absolute;left:0;top:0;font-family:var(--font-display);color:var(--cherry);font-size:1.3rem;pointer-events:none;animation:plus .7s ease-out forwards}
+.plus.minus{color:var(--ink)}
+@keyframes plus{from{opacity:1;translate:0 0}to{opacity:0;translate:0 -42px}}
+.field-msg{position:absolute;inset:0;z-index:2;display:grid;place-items:center;font-family:var(--font-display);font-size:2rem;color:var(--cherry);pointer-events:none;animation:popin .35s ease-out}
+.field-over{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px;text-align:center;background:var(--blush)}
+.over-title{margin:0;font-family:var(--font-display);font-size:1.9rem;line-height:1.1;color:var(--cherry)}
+.over-sub{margin:0;font-weight:700;max-width:28ch;text-wrap:balance}
+.field-over .btn{margin-top:6px}
+.timer{
+  position:absolute;top:10px;right:10px;z-index:2;pointer-events:none;
+  font-family:var(--font-display);font-size:1.05rem;line-height:1;padding:6px 11px;
+  border:2px solid var(--ink);border-radius:999px;background:var(--paper);color:var(--ink);font-variant-numeric:tabular-nums;
+}
+.timer.low{background:var(--cherry);color:var(--paper)}
+.meter{display:flex;align-items:center;gap:12px}
+.meter-label{font-size:.72rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.bar{flex:1;height:16px;border:2.5px solid var(--ink);border-radius:999px;background:var(--paper);overflow:hidden}
+.bar span{display:block;height:100%;width:0;background:var(--cherry);transition:width .2s ease}
+.count{font-family:var(--font-display);font-size:1.15rem;font-variant-numeric:tabular-nums;min-width:4.5ch;text-align:right}
+
+/* Spiel: Frage mit flüchtendem Knopf */
+.zone{position:relative;height:270px;border:2px dashed var(--dot);border-radius:18px}
+.zone .btn{
+  position:absolute;left:0;top:0;width:max-content;max-width:82%;
+  white-space:normal;text-wrap:balance;text-align:center;padding:13px 22px;
+  transition:left .32s cubic-bezier(.34,1.56,.64,1), top .32s cubic-bezier(.34,1.56,.64,1), transform .25s ease, box-shadow .12s ease, opacity .3s;
+}
+
+/* Spiel: Memory */
+.memory{display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:8px}
+.mcard{display:block;height:76px;padding:0;border:0;background:none;perspective:700px;cursor:pointer;border-radius:12px;touch-action:manipulation}
+.mcard-in{position:relative;display:block;width:100%;height:100%;transition:transform .42s ease;transform-style:preserve-3d;-webkit-transform-style:preserve-3d}
+.mcard.open .mcard-in,.mcard.matched .mcard-in{transform:rotateY(180deg)}
+.mback,.mface{
+  position:absolute;inset:0;display:grid;place-items:center;border:2.5px solid var(--ink);border-radius:12px;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:2px 2px 0 var(--ink);
+}
+.mback{background:var(--cherry)}
+.mback svg{width:26px;height:auto}
+.mface{
+  transform:rotateY(180deg);background:var(--paper);padding:6px;text-align:center;
+  font-weight:800;font-size:clamp(13px, 3.6vw, 15px);line-height:1.12;hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word;
+}
+.mface.a{color:var(--cherry)}
+.mcard.matched .mface{background:var(--blush)}
+
+/* Spiel: Rubbellos */
+.scratch{
+  position:relative;height:210px;border:2.5px solid var(--ink);border-radius:18px;overflow:hidden;
+  background-color:var(--paper);
+  background-image:repeating-linear-gradient(to bottom, transparent 0 33px, var(--blush) 33px 35px);
+}
+.scratch-word{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-display);font-size:clamp(2.4rem, 12vw, 3.2rem);color:var(--cherry);padding:0 12px;text-align:center;overflow-wrap:anywhere}
+.scratch:not(.ready) .scratch-word{visibility:hidden}
+.scratch canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;transition:opacity .7s ease}
+.scratch canvas.gone{opacity:0;pointer-events:none}
+
+/* Spiel: Buchstabensalat */
+.slots{display:flex;gap:4px;justify-content:center}
+.slot-l{
+  flex:1 1 0;min-width:0;max-width:38px;height:48px;padding:0;background:none;color:var(--ink);
+  border:0;border-bottom:3px solid var(--ink);font-family:var(--font-display);font-size:1.45rem;cursor:pointer;
+}
+.slot-l:disabled{cursor:default}
+.slots.ok .slot-l{color:var(--cherry);border-bottom-color:var(--cherry)}
+.tiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.tile{
+  width:48px;height:52px;border:2.5px solid var(--ink);border-radius:12px;background:var(--paper);
+  box-shadow:3px 3px 0 var(--ink);font-family:var(--font-display);font-size:1.45rem;color:var(--ink);
+  cursor:pointer;padding:0;touch-action:manipulation;transition:opacity .15s;
+}
+.tile:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.tile:disabled{opacity:.2;box-shadow:none;cursor:default}
+
+/* Spiel: Herz aufpumpen */
+.pump{
+  display:grid;place-items:center;height:270px;width:100%;padding:0;border:2.5px solid var(--ink);border-radius:18px;
+  background:var(--blush);cursor:pointer;overflow:hidden;touch-action:manipulation;
+}
+.pump-h{display:block;width:110px;transform:scale(.5);transition:transform .08s linear}
+.pump-h svg{display:block;width:100%;height:auto;overflow:visible}
+.pump.tense .pump-h svg{animation:wobble .22s linear infinite}
+.pump-h.boom{animation:boom .35s ease-out forwards}
+@keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+@keyframes boom{from{transform:scale(1.55);opacity:1}to{transform:scale(2.4);opacity:0}}
+
+/* Spiel: Küsse schätzen */
+.guess{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:18px 16px;border:2.5px solid var(--ink);border-radius:18px;background:var(--blush)}
+.guess-num{font-family:var(--font-display);font-size:clamp(2.6rem, 13vw, 3.4rem);line-height:1;color:var(--cherry);text-align:center;font-variant-numeric:tabular-nums}
+.range{-webkit-appearance:none;appearance:none;width:100%;height:36px;background:transparent;margin:0;touch-action:pan-y}
+.range:focus-visible{outline:3px solid var(--ink);outline-offset:4px;border-radius:999px}
+.range::-webkit-slider-runnable-track{height:14px;border:2px solid var(--ink);border-radius:999px;background:var(--paper)}
+.range::-webkit-slider-thumb{-webkit-appearance:none;width:32px;height:32px;margin-top:-11px;border-radius:50%;background:var(--cherry);border:2.5px solid var(--ink);box-shadow:2px 2px 0 var(--ink)}
+.range::-moz-range-track{height:10px;border:2px solid var(--ink);border-radius:999px;background:var(--paper)}
+.range::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:var(--cherry);border:2.5px solid var(--ink);box-shadow:2px 2px 0 var(--ink)}
+.range:disabled{opacity:.35}
+.range-ends{display:flex;justify-content:space-between;font-size:.8rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* Spiel: Reaktion */
+.react{
+  display:grid;place-items:center;align-content:center;gap:10px;height:250px;width:100%;padding:0;
+  border:2.5px solid var(--ink);border-radius:18px;background:var(--blush);color:var(--ink);cursor:pointer;touch-action:manipulation;
+}
+.react svg{width:118px;height:auto;overflow:visible}
+.react .hp{fill:var(--grey);stroke:var(--ink);transition:fill .06s}
+.react.go .hp{fill:var(--cherry)}
+.react.early{animation:shake .35s}
+.react-msg{font-family:var(--font-display);font-size:1.35rem;font-variant-numeric:tabular-nums}
+.rounds{display:flex;gap:10px;justify-content:center}
+.rounds i{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink);background:var(--paper)}
+.rounds i.on{background:var(--cherry)}
+
+/* Spiel: Gedrückt halten */
+.hold-wrap{display:grid;place-items:center;padding-block:10px}
+.hold{
+  position:relative;width:190px;height:190px;border-radius:50%;border:2.5px solid var(--ink);background:var(--paper);
+  box-shadow:4px 4px 0 var(--ink);display:grid;place-items:center;cursor:pointer;padding:0;color:var(--ink);
+  touch-action:none;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;transition:transform .1s, box-shadow .1s;
+}
+.hold.pressed{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.ring{position:absolute;inset:10px;width:calc(100% - 20px);height:calc(100% - 20px);transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--blush);stroke-width:12}
+.ring-fg{fill:none;stroke:var(--cherry);stroke-width:12;stroke-linecap:round}
+.ring-fg.reset{transition:stroke-dashoffset .45s ease}
+.hold-label{position:relative;font-family:var(--font-display);font-size:1.4rem;font-variant-numeric:tabular-nums}
+
+/* Spiel: Hütchen */
+.shell{position:relative;height:220px;border:2.5px solid var(--ink);border-radius:18px;background:var(--blush);overflow:hidden}
+.cup{position:absolute;left:0;top:0;padding:0;border:0;background:none;cursor:pointer;z-index:2;transition:left .38s ease-in-out, transform .3s ease;touch-action:manipulation}
+.cup svg{display:block;width:100%;height:auto}
+.cup.up{transform:translateY(-84px)}
+.cup:disabled{cursor:default}
+.horse{position:absolute;left:0;top:0;z-index:1;transition:opacity .2s}
+.horse svg{display:block;width:100%;height:auto}
+
+/* Finale: Sortieren */
+.answer{
+  display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start;min-height:130px;padding:12px;
+  border:2.5px solid var(--ink);border-radius:16px;background:var(--blush);
+}
+.slot-empty{display:inline-block;width:46px;height:37px;border:2px dashed var(--dot);border-radius:10px;background:var(--paper)}
+.answer .chip.locked{background:var(--cherry);color:var(--paper);cursor:default}
+.answer .chip.wrong{background:var(--grey);color:var(--paper)}
+.answer.shake{animation:shake .4s}
+.pool{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:40px}
+
+/* Finale: Brief */
+.fin-letter{
+  border:2.5px solid var(--ink);border-radius:18px;
+  background-color:var(--paper);
+  background-image:repeating-linear-gradient(to bottom, transparent 0 38px, var(--blush) 38px 40px);
+  padding:40px 22px;font-family:var(--font-hand);font-size:2rem;font-weight:700;line-height:40px;
+  user-select:text;-webkit-user-select:text;
+}
+.fin-letter p{margin:0}
+
+.shake{animation:shake .4s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+
+/* Herzchen-Konfetti */
+.fx{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:50}
+.confetti{position:absolute;left:0;top:0;width:var(--s);animation:fly 1.2s cubic-bezier(.2,.7,.4,1) forwards}
+.confetti svg{display:block;width:100%;height:auto;overflow:visible}
+@keyframes fly{
+  0%{transform:translate(-50%,-50%) scale(.3) rotate(0deg);opacity:1}
+  55%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1) rotate(var(--r));opacity:1}
+  100%{transform:translate(calc(-50% + var(--dx) * 1.2),calc(-50% + var(--dy) + 90px)) scale(.9) rotate(calc(var(--r) * 1.5));opacity:0}
+}
+
+@media (max-height:720px){
+  .field{height:260px}
+  .zone{height:240px}
+  .pump,.react{height:220px}
+  .shell{height:205px}
+  .mcard{height:68px}
+}
+@media (prefers-reduced-motion:reduce){
+  .start-heart,.field-msg,.big-word.pop,.chip.new{animation:none}
+  .zone .btn,.mcard-in{transition:none}
+}
+</style>
+</head>
+<body>
+<main class="card" lang="de">
+  <header class="top">
+    <span class="step-label" id="stepLabel">Bereit?</span>
+    <div class="segs" id="segs" aria-hidden="true"></div>
+  </header>
+
+  <section class="screen start" data-screen="start">
+    <div class="title-row">
+      <h1>Die Pips-Challenge</h1>
+      <svg class="start-heart" viewBox="0 0 32 31" aria-hidden="true"><path d="M16 28.6C16 28.6 2 19.7 2 10.3 2 5.7 5.6 2 10 2c2.6 0 4.8 1.3 6 3.3C17.2 3.3 19.4 2 22 2c4.4 0 8 3.7 8 8.3 0 9.4-14 18.3-14 18.3z" style="fill:var(--cherry);stroke:var(--ink)" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </div>
+    <p class="greet" id="startGreet"></p>
+    <p class="lead">Ich habe eine kleine Challenge für dich vorbereitet. Nacheinander spielst du verschiedene Spiele, und mit jedem schaltest du ein Wort frei.</p>
+    <p class="lead">Am Ende musst du die Wörter nur noch in die richtige Reihenfolge bringen. Dann bekommst du meine Nachricht für dich.</p>
+    <div class="btn-row">
+      <button class="btn btn-primary btn-wide" id="go" type="button">Los geht's</button>
+      <button class="btn btn-secondary btn-wide" id="restart" type="button" hidden>Von vorn anfangen</button>
+    </div>
+  </section>
+
+  <section class="screen" data-screen="game" hidden>
+    <div class="head">
+      <h2 id="gTitle"></h2>
+      <p class="hint" id="gHint"></p>
+    </div>
+    <div class="game" id="game"></div>
+  </section>
+
+  <section class="screen reveal" data-screen="reveal" hidden>
+    <p class="eyebrow">Wort freigeschaltet</p>
+    <div class="big-word" id="bigWord"></div>
+    <p class="lead" id="revealText"></p>
+    <button class="btn btn-primary btn-wide" id="next" type="button">Nächstes Spiel</button>
+  </section>
+
+  <section class="screen" data-screen="sort" hidden>
+    <div class="head">
+      <h2>Bring den Satz in Ordnung</h2>
+      <p class="hint">Tipp die Wörter der Reihe nach an. Ein Wort im Satz antippen schickt es zurück.</p>
+    </div>
+    <div class="answer" id="answer"></div>
+    <p class="feedback" id="sortFb" aria-live="polite"></p>
+    <div class="pool" id="pool"></div>
+    <button class="btn btn-secondary btn-wide" id="sortReset" type="button">Alles zurück</button>
+  </section>
+
+  <section class="screen" data-screen="finale" hidden>
+    <h1 id="finTitle"></h1>
+    <div class="fin-letter"><p id="finSentence"></p></div>
+    <button class="btn btn-secondary btn-wide" id="again" type="button">Nochmal von vorn</button>
+  </section>
+
+  <footer class="tray" id="tray" hidden>
+    <span class="tray-label">Wortschatz<b id="trayCount">0/13</b></span>
+    <div class="chips" id="trayChips"></div>
+  </footer>
+</main>
+<div class="fx" id="fx" aria-hidden="true"></div>
+
+<script>
+/* ===================== HIER ANPASSEN ===================== */
+const CONFIG = {
+  kosename: "Pips",
+  satz: "Danke, dass es dich gibt. Mit dir wird jeder Tag zu meinem Lieblingstag.",
+  // Welches Wort jedes Spiel freischaltet (0 = erstes Wort im Satz). Gemischt, damit der Satz erst am Ende Sinn ergibt.
+  reihenfolge: [3, 9, 1, 12, 6, 0, 10, 4, 8, 5, 11, 2, 7],
+  herzen: 10,
+  herzenZeit: 10,     // Sekunden beim ersten Versuch
+  herzenExtra: 5,     // Sekunden extra bei jedem weiteren Versuch
+  hubertRunden: 3,    // so oft muss Hubert beim Hütchenspiel gefunden werden
+  hubert: {
+    frage: "Wer hat Hubert zur Einschulung bekommen?",
+    richtig: "Wieland",
+    falsch: ["Pia"],
+    sprueche: { 2: "Hm. Der Knopf will irgendwie nicht.", 4: "Hubert erinnert sich da ganz genau.", 6: "Kleiner Tipp: Die richtige Antwort wird immer größer." },
+    erfolg: ["Hab ich ja schon immer gesagt."]
+  },
+  verfuehrt: {
+    frage: "Bist du bereit, heute noch verführt zu werden?",
+    richtig: "Ja",
+    falsch: ["Erst Pizza, dann reden wir", "Nur mit Nachtisch", "Nach der nächsten Folge", "Wenn du vorher abwäschst", "Okay, okay"],
+    sprueche: { 3: "Netter Versuch.", 5: "Der Ja-Knopf wartet geduldig." },
+    erfolg: ["Sehr gute Entscheidung.", "Bin unterwegs."]
+  },
+  recht: {
+    frage: "Wer hat bei uns eigentlich immer recht?",
+    richtig: "Wieland",
+    falsch: ["Pips"],
+    sprueche: { 2: "Der Knopf ziert sich.", 4: "Komm schon, die Antwort ist doch klar." },
+    erfolg: ["Schön, dass wir das geklärt haben.", "Spaß. Natürlich du."]
+  },
+  memory: [
+    ["Verlobung", "Tasmanien"],
+    ["Erstes Date", "Warnemünde"],
+    ["Hochzeit", "Rostock"],
+    ["Erster Urlaub", "Australien"],
+    ["Letzter Urlaub", "Holland"],
+    ["Hubert", "Einschulung"]
+  ],
+  salat: { frage: "Wo hast du Ja gesagt?", wort: "Tasmanien", erfolg: "Richtig. Und ich würde dich jederzeit wieder fragen." },
+  halten: 5 // Sekunden
+};
+/* ========================================================= */
+
+const $ = (s) => document.querySelector(s);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const WORDS = CONFIG.satz.trim().split(/\s+/);
+const N = WORDS.length;
+const isPerm = (a) => Array.isArray(a) && a.length === N && [...a].sort((x, y) => x - y).every((v, i) => v === i);
+const shuffle = (arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const ORDER = isPerm(CONFIG.reihenfolge) ? CONFIG.reihenfolge : shuffle([...Array(N).keys()]);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const tok = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const buzz = (ms) => { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} };
+
+const HEART_D = "M16 28.6C16 28.6 2 19.7 2 10.3 2 5.7 5.6 2 10 2c2.6 0 4.8 1.3 6 3.3C17.2 3.3 19.4 2 22 2c4.4 0 8 3.7 8 8.3 0 9.4-14 18.3-14 18.3z";
+const heartSVG = (fill) => `<svg viewBox="0 0 32 31" aria-hidden="true"><path d="${HEART_D}" style="fill:${fill};stroke:var(--ink)" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
+const brokenSVG = `<svg viewBox="0 0 32 31" aria-hidden="true"><path d="${HEART_D}" style="fill:var(--grey);stroke:var(--ink)" stroke-width="2.2" stroke-linejoin="round"/><path d="M16 5.8 L13.2 11.6 L17.6 15.8 L13.8 21.2 L16 28" style="fill:none;stroke:var(--paper)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+const cupSVG = `<svg viewBox="0 0 100 110" aria-hidden="true"><path d="M20 6 H80 L93 96 H7 Z" style="fill:var(--cherry);stroke:var(--ink)" stroke-width="3.5" stroke-linejoin="round"/><rect x="3" y="93" width="94" height="13" rx="4" style="fill:var(--cherry-soft);stroke:var(--ink)" stroke-width="3.5"/><g transform="translate(37 38) scale(.82)"><path d="${HEART_D}" style="fill:var(--paper);stroke:var(--ink)" stroke-width="2.6" stroke-linejoin="round"/></g></svg>`;
+const horseSVG = `<svg viewBox="0 0 80 80" aria-hidden="true">
+<path d="M25 25 L19 3 L35 16 Z" style="fill:var(--horse);stroke:var(--ink)" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M55 25 L61 3 L45 16 Z" style="fill:var(--horse);stroke:var(--ink)" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M22 9 L26 19 L31 15 Z" style="fill:var(--horse-light)"/>
+<path d="M58 9 L54 19 L49 15 Z" style="fill:var(--horse-light)"/>
+<path d="M40 12 C55 12 60 24 58 38 C57 46 61 52 61 61 C61 72 52 78 40 78 C28 78 19 72 19 61 C19 52 23 46 22 38 C20 24 25 12 40 12 Z" style="fill:var(--horse);stroke:var(--ink)" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M38 22 L42 22 L41.6 47 L38.4 47 Z" style="fill:var(--paper)"/>
+<ellipse cx="40" cy="64" rx="17" ry="12" style="fill:var(--horse-light);stroke:var(--ink)" stroke-width="2.5"/>
+<path d="M31 15 C32 6 39 3 41 9 C44 3 51 6 49 15 C46 12 42 13 40 19 C38 13 34 12 31 15 Z" style="fill:var(--mane);stroke:var(--ink)" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="29" cy="37" r="3.6" style="fill:var(--ink)"/><circle cx="51" cy="37" r="3.6" style="fill:var(--ink)"/>
+<circle cx="30.2" cy="35.8" r="1.1" style="fill:var(--paper)"/><circle cx="52.2" cy="35.8" r="1.1" style="fill:var(--paper)"/>
+<ellipse cx="33.5" cy="63" rx="2.4" ry="3.4" style="fill:var(--ink)"/><ellipse cx="46.5" cy="63" rx="2.4" ry="3.4" style="fill:var(--ink)"/>
+<path d="M35 71.5 Q40 74.5 45 71.5" style="fill:none;stroke:var(--ink)" stroke-width="2.2" stroke-linecap="round"/>
+<circle cx="26" cy="47" r="3.6" style="fill:var(--cherry-soft);opacity:.55"/><circle cx="54" cy="47" r="3.6" style="fill:var(--cherry-soft);opacity:.55"/>
+</svg>`;
+
+/* ---------- Zeitgeber, die beim Spielwechsel aufgeräumt werden ---------- */
+let token = 0, cleanupFn = null;
+const timers = new Set();
+function later(fn, ms) {
+  const my = token;
+  const id = setTimeout(() => { timers.delete(id); if (my === token) fn(); }, ms);
+  timers.add(id);
+  return id;
+}
+function clearGame() {
+  token++;
+  timers.forEach(clearTimeout);
+  timers.clear();
+  if (cleanupFn) { try { cleanupFn(); } catch (e) {} cleanupFn = null; }
+}
+
+/* ---------- Konfetti ---------- */
+const fx = $("#fx");
+function burst(el, n) {
+  if (reduce || !el) return;
+  const r = el.getBoundingClientRect();
+  const cols = ["var(--cherry)", "var(--cherry-soft)", "var(--paper)"];
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement("span");
+    s.className = "confetti";
+    s.innerHTML = heartSVG(cols[i % 3]);
+    s.style.left = r.left + r.width / 2 + "px";
+    s.style.top = r.top + r.height / 2 + "px";
+    s.style.setProperty("--dx", (Math.random() - 0.5) * 320 + "px");
+    s.style.setProperty("--dy", -60 - Math.random() * 200 + "px");
+    s.style.setProperty("--r", (Math.random() - 0.5) * 120 + "deg");
+    s.style.setProperty("--s", 14 + Math.random() * 14 + "px");
+    s.style.animationDelay = Math.random() * 90 + "ms";
+    fx.appendChild(s);
+    setTimeout(() => s.remove(), 1500);
+  }
+}
+
+/* ---------- Spiel-Bausteine ---------- */
+
+// Frage, bei der die verlockende Antwort davonläuft
+function fleeGame(o) {
+  return {
+    title: o.frage,
+    hint: "Nur eine Antwort ist richtig.",
+    run(el, win) {
+      el.innerHTML = `<div class="zone"><button class="btn btn-primary" type="button" data-yes></button><button class="btn btn-secondary" type="button" data-no></button></div><p class="feedback" aria-live="polite"></p>`;
+      const zone = el.querySelector(".zone"), yes = el.querySelector("[data-yes]"), no = el.querySelector("[data-no]"), fb = el.querySelector(".feedback");
+      yes.textContent = o.richtig;
+      no.textContent = o.falsch[0];
+      let flees = 0, lastFlee = 0, answered = false;
+      const W = () => zone.clientWidth, H = () => zone.clientHeight;
+      function place(b, cx, cy) {
+        const w = b.offsetWidth, h = b.offsetHeight;
+        b.style.left = Math.max(6, Math.min(W() - w - 6, cx - w / 2)) + "px";
+        b.style.top = Math.max(6, Math.min(H() - h - 6, cy - h / 2)) + "px";
+      }
+      [yes, no].forEach((b) => (b.style.transition = "none"));
+      if (yes.offsetWidth + no.offsetWidth + 36 <= W()) {
+        place(yes, W() * 0.3, H() / 2);
+        place(no, W() * 0.72, H() / 2);
+      } else {
+        place(yes, W() / 2, H() / 2);
+        place(no, W() / 2, H() - no.offsetHeight / 2 - 14);
+      }
+      void zone.offsetWidth;
+      [yes, no].forEach((b) => (b.style.transition = ""));
+
+      function flee() {
+        if (answered) return;
+        const now = performance.now();
+        if (now - lastFlee < 260) return;
+        lastFlee = now;
+        flees++;
+        buzz(10);
+        no.textContent = o.falsch[Math.min(flees, o.falsch.length - 1)];
+        const g = Math.min(1.45, 1 + flees * 0.09);
+        yes.style.setProperty("--grow", g);
+        const w = W(), hh = H(), bw = no.offsetWidth, bh = no.offsetHeight;
+        const ycx = parseFloat(yes.style.left) + yes.offsetWidth / 2;
+        const ycy = parseFloat(yes.style.top) + yes.offsetHeight / 2;
+        const yw = (yes.offsetWidth * g) / 2 + 14, yh = (yes.offsetHeight * g) / 2 + 14;
+        const x0 = parseFloat(no.style.left), y0 = parseFloat(no.style.top);
+        let pick = null, spare = null;
+        for (let i = 0; i < 80; i++) {
+          const x = 6 + Math.random() * Math.max(0, w - bw - 12);
+          const y = 6 + Math.random() * Math.max(0, hh - bh - 12);
+          if (!(x + bw < ycx - yw || x > ycx + yw || y + bh < ycy - yh || y > ycy + yh)) continue;
+          if (Math.hypot(x - x0, y - y0) > 90) { pick = { x, y }; break; }
+          if (!spare) spare = { x, y };
+        }
+        pick = pick || spare;
+        if (pick) { no.style.left = pick.x + "px"; no.style.top = pick.y + "px"; }
+        if (o.sprueche && o.sprueche[flees]) fb.textContent = o.sprueche[flees];
+      }
+      no.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") flee(); });
+      no.addEventListener("pointerdown", (e) => { e.preventDefault(); flee(); });
+      no.addEventListener("click", (e) => { e.preventDefault(); flee(); });
+      yes.addEventListener("click", () => {
+        if (answered) return;
+        answered = true;
+        yes.disabled = no.disabled = true;
+        no.style.opacity = "0";
+        burst(yes, 16);
+        buzz(30);
+        o.erfolg.forEach((line, k) => later(() => (fb.textContent = line), k * 1500));
+        win((o.erfolg.length - 1) * 1500 + 1500);
+      });
+    }
+  };
+}
+
+// Rubbellos: legt genau ein Wort frei
+function scratchGame(title, hint) {
+  return {
+    title, hint,
+    run(el, win, word) {
+      el.innerHTML = `<div class="scratch"><div class="scratch-word"></div><canvas aria-label="Rubbelfeld"></canvas></div>`;
+      const box = el.querySelector(".scratch"), cv = box.querySelector("canvas"), ctx = cv.getContext("2d");
+      box.querySelector(".scratch-word").textContent = word;
+      const my = token;
+      let drawing = false, lastPt = null, moves = 0, revealed = false, bw = 0;
+      function draw() {
+        const r = box.getBoundingClientRect();
+        bw = r.width;
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        cv.width = Math.round(r.width * dpr);
+        cv.height = Math.round(r.height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.globalCompositeOperation = "source-over";
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = tok("--cherry");
+        ctx.fillRect(0, 0, r.width, r.height);
+        const p = new Path2D(HEART_D);
+        ctx.fillStyle = tok("--cherry-soft");
+        ctx.globalAlpha = 0.55;
+        let row = 0;
+        for (let y = 10; y < r.height; y += 30, row++) {
+          for (let x = row % 2 ? 26 : 8; x < r.width; x += 36) {
+            ctx.save(); ctx.translate(x, y); ctx.scale(0.42, 0.42); ctx.fill(p); ctx.restore();
+          }
+        }
+        ctx.globalAlpha = 1;
+        const cx = r.width / 2, cy = r.height / 2, w = Math.min(240, r.width - 32), h = 80;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(cx - w / 2, cy - h / 2, w, h, 20); else ctx.rect(cx - w / 2, cy - h / 2, w, h);
+        ctx.fillStyle = tok("--paper"); ctx.fill();
+        ctx.lineWidth = 2.5; ctx.strokeStyle = tok("--ink"); ctx.stroke();
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillStyle = tok("--ink");
+        ctx.font = `26px ${tok("--font-display")}`;
+        ctx.fillText("Hier rubbeln", cx, cy - 9);
+        ctx.fillStyle = tok("--muted");
+        ctx.font = `700 13px ${tok("--font-body")}`;
+        ctx.fillText("Darunter wartet ein Wort", cx, cy + 18);
+      }
+      draw();
+      box.classList.add("ready");
+      if (document.fonts && document.fonts.load) {
+        document.fonts.load('26px "Caprasimo"').then(() => { if (my === token && !moves && !revealed) draw(); }).catch(() => {});
+      }
+      const pt = (e) => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+      function line(a, b) {
+        ctx.globalCompositeOperation = "destination-out";
+        ctx.lineWidth = 46; ctx.lineCap = "round"; ctx.lineJoin = "round";
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x + 0.01, b.y); ctx.stroke();
+      }
+      function check() {
+        if (revealed) return;
+        const d = ctx.getImageData(0, 0, cv.width, cv.height).data;
+        let clear = 0, total = 0;
+        for (let i = 3; i < d.length; i += 4 * 24) { total++; if (d[i] === 0) clear++; }
+        if (total && clear / total > 0.48) {
+          revealed = true; drawing = false;
+          cv.classList.add("gone");
+          burst(box, 22); buzz(40);
+          win(1200);
+        }
+      }
+      cv.addEventListener("pointerdown", (e) => {
+        if (revealed) return;
+        drawing = true;
+        try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+        lastPt = pt(e); line(lastPt, lastPt); moves++;
+      });
+      cv.addEventListener("pointermove", (e) => {
+        if (!drawing) return;
+        const p = pt(e); line(lastPt, p); lastPt = p;
+        if (++moves % 8 === 0) check();
+      });
+      ["pointerup", "pointercancel"].forEach((t) => cv.addEventListener(t, () => { if (drawing) { drawing = false; check(); } }));
+      let ro = null;
+      if ("ResizeObserver" in window) {
+        ro = new ResizeObserver(() => { if (!revealed && Math.abs(box.clientWidth - bw) > 2) draw(); });
+        ro.observe(box);
+      }
+      return () => ro && ro.disconnect();
+    }
+  };
+}
+
+const heartsGame = {
+  title: `Fang ${CONFIG.herzen} Herzen`,
+  hint: `Du hast ${CONFIG.herzenZeit} Sekunden. Gebrochene Herzen kosten einen Punkt.`,
+  run(el, win) {
+    const goal = CONFIG.herzen;
+    let limit = CONFIG.herzenZeit;
+    el.innerHTML = `<div class="field"><span class="timer" hidden></span><div class="field-msg" hidden>Alle gefangen!</div><div class="field-over"><p class="over-title">Bereit?</p><p class="over-sub"></p><button class="btn btn-primary" type="button" data-start>Start</button></div></div><div class="meter"><div class="bar"><span></span></div><span class="count"></span></div>`;
+    const field = el.querySelector(".field"), msg = el.querySelector(".field-msg"), bar = el.querySelector(".bar span"), count = el.querySelector(".count");
+    const timerEl = el.querySelector(".timer"), over = el.querySelector(".field-over"), overTitle = el.querySelector(".over-title"), overSub = el.querySelector(".over-sub"), startBtn = el.querySelector("[data-start]");
+    const my = token;
+    let hearts = [], score = 0, last = 0, acc = 0, running = false, tEnd = 0;
+    const upd = () => { count.textContent = `${score} / ${goal}`; bar.style.width = (score / goal) * 100 + "%"; };
+    const secs = (ms) => (ms / 1000).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " s";
+    upd();
+    overSub.textContent = `Du hast ${limit} Sekunden.`;
+    function fadeAll() {
+      const old = hearts;
+      hearts = [];
+      old.forEach((x) => { x.dead = true; x.el.style.transition = "opacity .3s"; x.el.style.opacity = "0"; });
+      setTimeout(() => old.forEach((x) => x.el.remove()), 320);
+    }
+    function start() {
+      if (running) return;
+      hearts.forEach((x) => x.el.remove());
+      hearts = [];
+      score = 0;
+      upd();
+      over.hidden = true;
+      timerEl.hidden = false;
+      timerEl.classList.remove("low");
+      timerEl.textContent = secs(limit * 1000);
+      running = true;
+      last = performance.now();
+      tEnd = last + limit * 1000;
+      acc = 0.3;
+      requestAnimationFrame(tick);
+    }
+    function fail() {
+      running = false;
+      fadeAll();
+      limit += CONFIG.herzenExtra;
+      overTitle.textContent = "Zeit um!";
+      overSub.textContent = `${score} von ${goal} Herzen. Nochmal, diesmal mit ${CONFIG.herzenExtra} Sekunden extra.`;
+      startBtn.textContent = `Nochmal (${limit} Sekunden)`;
+      timerEl.hidden = true;
+      over.hidden = false;
+      buzz(50);
+    }
+    startBtn.addEventListener("click", start);
+    function spawn() {
+      const W = field.clientWidth, H = field.clientHeight;
+      const bad = Math.random() < 0.35;
+      const s = 40 + Math.random() * 16, a = 8 + Math.random() * 14;
+      const b = document.createElement("button");
+      b.type = "button"; b.className = bad ? "heart bad" : "heart"; b.tabIndex = -1;
+      b.setAttribute("aria-label", bad ? "Gebrochenes Herz" : "Herz");
+      b.style.width = s + "px";
+      b.innerHTML = bad ? brokenSVG : heartSVG(Math.random() < 0.7 ? "var(--cherry)" : "var(--cherry-soft)");
+      const h = { el: b, s, a, bad, x: a + Math.random() * Math.max(0, W - s - 2 * a), y: H + 4, cx: 0, v: (150 + Math.random() * 90) * (1 + score * 0.03), t: 0, f: 2.5 + Math.random() * 2, p: Math.random() * 6.28, dead: false };
+      b.addEventListener("pointerdown", (e) => { e.preventDefault(); hit(h); });
+      field.appendChild(b);
+      hearts.push(h);
+    }
+    function tick(now) {
+      if (my !== token || !running) return;
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      acc += dt;
+      if (acc > 0.4 && hearts.length < 9) { acc = 0; spawn(); }
+      for (const h of hearts) {
+        h.y -= h.v * dt; h.t += dt;
+        h.cx = h.x + Math.sin(h.t * h.f + h.p) * h.a;
+        h.el.style.transform = `translate(${h.cx}px, ${h.y}px)`;
+        if (h.y < -h.s * 1.1) { h.dead = true; h.el.remove(); }
+      }
+      hearts = hearts.filter((h) => !h.dead);
+      const rem = Math.max(0, tEnd - now);
+      timerEl.textContent = secs(rem);
+      timerEl.classList.toggle("low", rem < 3000);
+      if (rem <= 0) { fail(); return; }
+      requestAnimationFrame(tick);
+    }
+    function floatText(h, text, cls) {
+      const t = document.createElement("span");
+      t.className = "plus " + cls;
+      t.textContent = text;
+      t.style.transform = `translate(${h.cx + h.s / 2 - 12}px, ${h.y}px)`;
+      field.appendChild(t);
+      setTimeout(() => t.remove(), 720);
+    }
+    function hit(h) {
+      if (h.dead || !running) return;
+      h.dead = true;
+      hearts = hearts.filter((x) => x !== h);
+      h.el.classList.add("pop");
+      setTimeout(() => h.el.remove(), 240);
+      if (h.bad) {
+        score = Math.max(0, score - 1);
+        floatText(h, "−1", "minus");
+        field.classList.remove("ouch"); void field.offsetWidth; field.classList.add("ouch");
+        buzz(45);
+      } else {
+        score++;
+        floatText(h, "+1", "");
+        buzz(8);
+      }
+      upd();
+      if (score >= goal) {
+        running = false;
+        fadeAll();
+        timerEl.hidden = true;
+        msg.hidden = false;
+        burst(field, 14);
+        win(1100);
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+};
+
+const memoryGame = {
+  title: "Memory: Was gehört zusammen?",
+  hint: "Deck je zwei Karten auf, die zusammengehören.",
+  run(el, win) {
+    const pairs = CONFIG.memory;
+    const cards = shuffle(pairs.flatMap((p, k) => [{ t: p[0], k, a: true }, { t: p[1], k, a: false }]));
+    el.innerHTML = `<div class="memory">${cards.map((c, i) => `<button class="mcard" type="button" data-i="${i}" aria-label="Verdeckte Karte"><span class="mcard-in"><span class="mback">${heartSVG("var(--paper)")}</span><span class="mface${c.a ? " a" : ""}">${esc(c.t)}</span></span></button>`).join("")}</div><div class="meter"><span class="meter-label">Paare</span><div class="bar"><span></span></div><span class="count">0 / ${pairs.length}</span></div>`;
+    const bar = el.querySelector(".bar span"), count = el.querySelector(".count"), grid = el.querySelector(".memory");
+    let open = [], lock = false, found = 0;
+    grid.addEventListener("click", (e) => {
+      const b = e.target.closest(".mcard");
+      if (!b || lock || b.classList.contains("open") || b.classList.contains("matched")) return;
+      const c = cards[+b.dataset.i];
+      b.classList.add("open");
+      b.setAttribute("aria-label", c.t);
+      open.push(b);
+      if (open.length < 2) return;
+      const [x, y] = open;
+      open = [];
+      if (cards[+x.dataset.i].k === cards[+y.dataset.i].k) {
+        [x, y].forEach((m) => { m.classList.add("matched"); m.classList.remove("open"); });
+        found++;
+        count.textContent = `${found} / ${pairs.length}`;
+        bar.style.width = (found / pairs.length) * 100 + "%";
+        buzz(15);
+        if (found === pairs.length) { burst(grid, 22); win(1000); }
+      } else {
+        lock = true;
+        later(() => {
+          [x, y].forEach((m) => { m.classList.remove("open"); m.setAttribute("aria-label", "Verdeckte Karte"); });
+          lock = false;
+        }, 950);
+      }
+    });
+  }
+};
+
+const salatGame = {
+  title: CONFIG.salat.frage,
+  hint: "Tipp die Buchstaben in der richtigen Reihenfolge an. Oben antippen schickt einen zurück.",
+  run(el, win) {
+    const target = CONFIG.salat.wort.toUpperCase();
+    const letters = [...target];
+    let order = shuffle(letters.map((_, i) => i));
+    while (letters.length > 1 && order.map((i) => letters[i]).join("") === target) order = shuffle(order);
+    el.innerHTML = `<div class="slots"></div><div class="tiles">${order.map((i) => `<button class="tile" type="button" data-t="${i}">${esc(letters[i])}</button>`).join("")}</div><p class="feedback" aria-live="polite"></p>`;
+    const slotsEl = el.querySelector(".slots"), fb = el.querySelector(".feedback"), tiles = [...el.querySelectorAll(".tile")];
+    let placed = [], tries = 0, solved = false, busy = false;
+    function render() {
+      slotsEl.innerHTML = letters.map((_, j) => `<button class="slot-l" type="button" data-j="${j}"${placed[j] === undefined ? " disabled" : ""}>${placed[j] === undefined ? "" : esc(letters[placed[j]])}</button>`).join("");
+      tiles.forEach((t) => (t.disabled = solved || placed.includes(+t.dataset.t)));
+    }
+    function check() {
+      if (placed.map((i) => letters[i]).join("") === target) {
+        solved = true;
+        render();
+        slotsEl.classList.add("ok");
+        fb.textContent = CONFIG.salat.erfolg;
+        burst(slotsEl, 18); buzz(30);
+        win(2000);
+      } else {
+        tries++;
+        busy = true;
+        slotsEl.classList.add("shake");
+        fb.textContent = tries >= 2 ? `Tipp: Es fängt mit ${target[0]} an.` : "Fast. Probier es nochmal.";
+        buzz(40);
+        later(() => { slotsEl.classList.remove("shake"); placed = []; busy = false; render(); }, 750);
+      }
+    }
+    el.querySelector(".tiles").addEventListener("click", (e) => {
+      const t = e.target.closest(".tile");
+      if (!t || solved || busy || t.disabled) return;
+      placed.push(+t.dataset.t);
+      render();
+      if (placed.length === letters.length) check();
+    });
+    slotsEl.addEventListener("click", (e) => {
+      const s = e.target.closest(".slot-l");
+      if (!s || solved || busy || s.disabled) return;
+      placed.splice(+s.dataset.j, 1);
+      render();
+    });
+    render();
+  }
+};
+
+const pumpGame = {
+  title: "Pump das Herz auf",
+  hint: "Tipp so schnell du kannst, bis es platzt. Wenn du aufhörst, verliert es Luft.",
+  run(el, win) {
+    el.innerHTML = `<button class="pump" type="button" aria-label="Herz aufpumpen"><span class="pump-h">${heartSVG("var(--cherry)")}</span></button><div class="meter"><span class="meter-label">Luft</span><div class="bar"><span></span></div></div>`;
+    const btn = el.querySelector(".pump"), hEl = el.querySelector(".pump-h"), bar = el.querySelector(".bar span");
+    const goal = 24, leak = 1.8, my = token;
+    let p = 0, last = performance.now(), done = false;
+    function pump() {
+      if (done) return;
+      p = Math.min(goal, p + 1);
+      buzz(6);
+      if (p >= goal) {
+        done = true;
+        bar.style.width = "100%";
+        btn.classList.remove("tense");
+        hEl.classList.add("boom");
+        burst(btn, 26); buzz(70);
+        win(1000);
+      }
+    }
+    btn.addEventListener("pointerdown", (e) => { e.preventDefault(); pump(); });
+    btn.addEventListener("click", (e) => { if (e.detail === 0) pump(); });
+    function tick(now) {
+      if (my !== token || done) return;
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      p = Math.max(0, p - leak * dt);
+      const r = p / goal;
+      hEl.style.transform = `scale(${0.5 + r * 1.05})`;
+      bar.style.width = r * 100 + "%";
+      btn.classList.toggle("tense", r > 0.72);
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+};
+
+const kussGame = {
+  title: "Wie viele Küsse schulde ich dir noch?",
+  hint: "Schieb den Regler auf deine Schätzung.",
+  run(el, win) {
+    const rounds = [
+      { max: 100, step: 1, reply: "Mehr. Viel mehr." },
+      { max: 1000, step: 10, reply: "Immer noch viel zu wenig." },
+      { max: 1000000, step: 1000, reply: null }
+    ];
+    el.innerHTML = `<div class="guess"><output class="guess-num" for="kissRange">50</output><input class="range" type="range" id="kissRange" min="0" max="100" step="1" value="50" aria-label="Anzahl Küsse"><div class="range-ends"><span>0</span><span class="range-max">100</span></div></div><p class="feedback" aria-live="polite"></p><button class="btn btn-primary btn-wide" type="button" data-go>Tipp abgeben</button>`;
+    const guess = el.querySelector(".guess"), out = el.querySelector(".guess-num"), range = el.querySelector(".range"), maxEl = el.querySelector(".range-max"), fb = el.querySelector(".feedback"), go = el.querySelector("[data-go]");
+    const fmt = (n) => Number(n).toLocaleString("de-DE");
+    let r = 0;
+    range.addEventListener("input", () => (out.textContent = fmt(range.value)));
+    go.addEventListener("click", () => {
+      if (r < rounds.length - 1) {
+        fb.textContent = rounds[r].reply;
+        r++;
+        range.max = rounds[r].max;
+        range.step = rounds[r].step;
+        range.value = rounds[r].max / 2;
+        out.textContent = fmt(range.value);
+        maxEl.textContent = fmt(rounds[r].max);
+        go.textContent = r === rounds.length - 1 ? "Letzter Versuch" : "Nochmal tippen";
+        guess.classList.remove("shake"); void guess.offsetWidth; guess.classList.add("shake");
+        buzz(30);
+      } else {
+        out.textContent = "∞";
+        range.disabled = true;
+        go.disabled = true;
+        maxEl.textContent = "∞";
+        fb.textContent = "Unendlich viele. Gewöhn dich dran.";
+        burst(out, 20); buzz(40);
+        win(2000);
+      }
+    });
+  }
+};
+
+const reactGame = {
+  title: "Sei schnell",
+  hint: "Tipp aufs Herz, sobald es rot wird. Aber nicht vorher. Dreimal.",
+  run(el, win) {
+    el.innerHTML = `<button class="react" type="button"><svg viewBox="0 0 32 31" aria-hidden="true"><path class="hp" d="${HEART_D}" stroke-width="2.2" stroke-linejoin="round"/></svg><span class="react-msg">Tipp zum Start</span></button><div class="rounds"><i></i><i></i><i></i></div><p class="feedback" aria-live="polite"></p>`;
+    const btn = el.querySelector(".react"), msg = el.querySelector(".react-msg"), dots = [...el.querySelectorAll(".rounds i")], fb = el.querySelector(".feedback");
+    let state = "idle", t0 = 0, done = 0, best = Infinity, timer = null;
+    function arm() {
+      state = "wait";
+      btn.classList.remove("go");
+      msg.textContent = "Warte …";
+      timer = later(() => { state = "go"; btn.classList.add("go"); msg.textContent = "Jetzt!"; t0 = performance.now(); }, 1100 + Math.random() * 2200);
+    }
+    function press() {
+      if (state === "idle") { fb.textContent = ""; arm(); return; }
+      if (state === "wait") {
+        clearTimeout(timer);
+        state = "pause";
+        msg.textContent = "Zu früh!";
+        btn.classList.remove("early"); void btn.offsetWidth; btn.classList.add("early");
+        buzz(45);
+        later(arm, 1000);
+        return;
+      }
+      if (state === "go") {
+        const ms = Math.round(performance.now() - t0);
+        best = Math.min(best, ms);
+        dots[done].classList.add("on");
+        done++;
+        state = "pause";
+        btn.classList.remove("go");
+        msg.textContent = `${ms} ms`;
+        buzz(12);
+        if (done >= 3) {
+          state = "done";
+          fb.textContent = `Bestzeit: ${best} ms. Ganz schön flink.`;
+          burst(btn, 18);
+          win(1600);
+        } else later(arm, 1000);
+      }
+    }
+    btn.addEventListener("pointerdown", (e) => { e.preventDefault(); press(); });
+    btn.addEventListener("click", (e) => { if (e.detail === 0) press(); });
+  }
+};
+
+const holdGame = {
+  title: "Halt den Knopf gedrückt",
+  hint: "So lange, wie du mich lieb hast.",
+  run(el, win) {
+    el.innerHTML = `<div class="hold-wrap"><button class="hold" type="button"><svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-fg" cx="60" cy="60" r="52"/></svg><span class="hold-label">Drücken</span></button></div><p class="feedback" aria-live="polite"></p>`;
+    const btn = el.querySelector(".hold"), ring = el.querySelector(".ring-fg"), label = el.querySelector(".hold-label"), fb = el.querySelector(".feedback");
+    const need = CONFIG.halten * 1000, C = 2 * Math.PI * 52, my = token;
+    const lines = ["Nur so kurz?", "Da geht noch mehr.", "Länger. Viel länger.", "Hm. Ich warte."];
+    ring.style.strokeDasharray = C;
+    ring.style.strokeDashoffset = C;
+    let holding = false, t0 = 0, fails = 0, done = false;
+    btn.addEventListener("contextmenu", (e) => e.preventDefault());
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      if (done) return;
+      holding = true;
+      t0 = performance.now();
+      try { btn.setPointerCapture(e.pointerId); } catch (err) {}
+      btn.classList.add("pressed");
+      ring.classList.remove("reset");
+      fb.textContent = "";
+      requestAnimationFrame(tick);
+    });
+    function release() {
+      if (!holding || done) return;
+      holding = false;
+      btn.classList.remove("pressed");
+      ring.classList.add("reset");
+      ring.style.strokeDashoffset = C;
+      label.textContent = "Nochmal";
+      fb.textContent = lines[Math.min(fails, lines.length - 1)];
+      fails++;
+      buzz(30);
+    }
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach((t) => btn.addEventListener(t, release));
+    function tick(now) {
+      if (my !== token || !holding || done) return;
+      const p = Math.min(1, (now - t0) / need);
+      ring.style.strokeDashoffset = C * (1 - p);
+      label.textContent = ((now - t0) / 1000).toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " s";
+      if (p >= 1) {
+        done = true;
+        holding = false;
+        btn.classList.remove("pressed");
+        label.textContent = "Für immer";
+        fb.textContent = "Okay, okay. Für immer, ich hab's verstanden.";
+        burst(btn, 22); buzz(60);
+        win(2000);
+        return;
+      }
+      requestAnimationFrame(tick);
+    }
+  }
+};
+
+const shellGame = {
+  title: "Wo ist Hubert?",
+  hint: `Merk dir, unter welchem Becher er sitzt. Du musst ihn ${CONFIG.hubertRunden}-mal finden.`,
+  run(el, win) {
+    const total = CONFIG.hubertRunden;
+    el.innerHTML = `<div class="shell"><span class="horse">${horseSVG}</span>${[0, 1, 2].map((c) => `<button class="cup" type="button" data-c="${c}" aria-label="Becher ${c + 1}" disabled>${cupSVG}</button>`).join("")}</div><div class="rounds">${"<i></i>".repeat(total)}</div><p class="feedback" aria-live="polite">Hier sitzt Hubert.</p><button class="btn btn-primary btn-wide" type="button" data-mix>Mischen</button>`;
+    const shell = el.querySelector(".shell"), horse = el.querySelector(".horse"), cups = [...el.querySelectorAll(".cup")], fb = el.querySelector(".feedback"), mix = el.querySelector("[data-mix]"), dots = [...el.querySelectorAll(".rounds i")];
+    const slotOf = [0, 1, 2];
+    const hub = Math.floor(Math.random() * 3);
+    let phase = "show", found = 0;
+    const plan = (r) => ({ n: 6 + r * 2, ms: Math.max(300, 460 - r * 60) });
+    function layout() {
+      const W = shell.clientWidth, H = shell.clientHeight;
+      const cw = Math.min(96, W * 0.29), ch = cw * 1.1, hw = cw * 0.72;
+      cups.forEach((c, i) => {
+        c.style.width = cw + "px";
+        c.style.left = (W * (slotOf[i] * 2 + 1)) / 6 - cw / 2 + "px";
+        c.style.top = H - ch - 10 + "px";
+      });
+      horse.style.width = hw + "px";
+      horse.style.left = (W * (slotOf[hub] * 2 + 1)) / 6 - hw / 2 + "px";
+      horse.style.top = H - 10 - hw + "px";
+    }
+    cups.forEach((c) => (c.style.transition = "none"));
+    layout();
+    void shell.offsetWidth;
+    cups.forEach((c) => (c.style.transition = ""));
+    cups[hub].classList.add("up");
+
+    function swaps(n, ms) {
+      if (n === 0) {
+        phase = "pick";
+        cups.forEach((c) => (c.disabled = false));
+        fb.textContent = "Wo ist er?";
+        return;
+      }
+      const a = Math.floor(Math.random() * 3);
+      let b = Math.floor(Math.random() * 2);
+      if (b >= a) b++;
+      const ia = slotOf.indexOf(a), ib = slotOf.indexOf(b);
+      slotOf[ia] = b; slotOf[ib] = a;
+      cups.forEach((c) => (c.style.zIndex = 2));
+      cups[ia].style.zIndex = 4; cups[ib].style.zIndex = 3;
+      layout();
+      later(() => swaps(n - 1, ms), ms);
+    }
+    mix.addEventListener("click", () => {
+      if (phase !== "show") return;
+      phase = "mixing";
+      mix.hidden = true;
+      fb.textContent = "Gut aufpassen …";
+      cups.forEach((c) => c.classList.remove("up"));
+      const { n, ms } = plan(found);
+      later(() => {
+        horse.style.opacity = "0";
+        cups.forEach((c) => (c.style.transition = `left ${Math.round(ms * 0.85)}ms ease-in-out, transform .3s ease`));
+        swaps(n, ms);
+      }, 500);
+    });
+    cups.forEach((c, i) => c.addEventListener("click", () => {
+      if (phase !== "pick") return;
+      phase = "result";
+      cups.forEach((x) => (x.disabled = true));
+      layout();
+      horse.style.opacity = "1";
+      c.classList.add("up");
+      if (i === hub) {
+        dots[found].classList.add("on");
+        found++;
+        burst(c, 14); buzz(30);
+        if (found >= total) {
+          fb.textContent = `${total}-mal gefunden. Hubert ist beeindruckt.`;
+          win(1800);
+        } else {
+          const left = total - found;
+          fb.textContent = `Gefunden! Noch ${left} ${left === 1 ? "Runde" : "Runden"}, jetzt etwas schneller.`;
+          mix.textContent = "Nächste Runde";
+          mix.hidden = false;
+          phase = "show";
+        }
+      } else {
+        fb.textContent = "Leer.";
+        buzz(40);
+        later(() => {
+          cups[hub].classList.add("up");
+          fb.textContent = "Knapp daneben. Hubert saß hier.";
+          mix.textContent = "Nochmal mischen";
+          mix.hidden = false;
+          phase = "show";
+        }, 650);
+      }
+    }));
+    let ro = null;
+    if ("ResizeObserver" in window) { ro = new ResizeObserver(() => { if (phase !== "mixing") layout(); }); ro.observe(shell); }
+    return () => ro && ro.disconnect();
+  }
+};
+
+/* ---------- Die 13 Spiele in Reihenfolge ---------- */
+const GAMES = [
+  heartsGame,
+  fleeGame(CONFIG.hubert),
+  scratchGame("Rubbel das Wort frei", "Wisch mit dem Finger über die Karte."),
+  memoryGame,
+  fleeGame(CONFIG.verfuehrt),
+  salatGame,
+  pumpGame,
+  kussGame,
+  reactGame,
+  fleeGame(CONFIG.recht),
+  holdGame,
+  shellGame,
+  scratchGame("Ein letztes Mal rubbeln", "Das ist das letzte Wort vor dem Finale.")
+];
+const PLAY = WORDS.map((_, i) => GAMES[i % GAMES.length]);
+
+/* ---------- Spielstand ---------- */
+const KEY = "pips-challenge-v1";
+let stage = 0, unlocked = [], done = false;
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (!s || !Array.isArray(s.unlocked) || s.n !== N) return null;
+    if (s.stage < 0 || s.stage > N || s.unlocked.length !== s.stage) return null;
+    if (!s.unlocked.every((w, i) => w === ORDER[i])) return null;
+    return s;
+  } catch (e) { return null; }
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ n: N, stage, unlocked, done })); } catch (e) {} }
+function wipe() { try { localStorage.removeItem(KEY); } catch (e) {} }
+function reset() { stage = 0; unlocked = []; done = false; }
+
+/* ---------- Ablauf ---------- */
+const screens = [...document.querySelectorAll("[data-screen]")];
+const segsEl = $("#segs");
+segsEl.innerHTML = WORDS.map(() => "<i></i>").join("");
+const segs = [...segsEl.children];
+
+function show(name) {
+  screens.forEach((s) => (s.hidden = s.dataset.screen !== name));
+  $("#tray").hidden = !(name === "game" || name === "reveal");
+  window.scrollTo(0, 0);
+}
+function header(label, doneCount, nowIdx) {
+  $("#stepLabel").textContent = label;
+  segs.forEach((s, i) => { s.classList.toggle("on", i < doneCount); s.classList.toggle("now", i === nowIdx); });
+}
+function renderTray(fresh) {
+  $("#trayCount").textContent = `${unlocked.length}/${N}`;
+  const chips = $("#trayChips");
+  chips.innerHTML = unlocked.map((w, i) => `<span class="chip${fresh && i === unlocked.length - 1 ? " new" : ""}">${esc(WORDS[w])}</span>`).join("");
+  chips.scrollLeft = chips.scrollWidth;
+}
+
+function runGame(i) {
+  clearGame();
+  show("game");
+  const g = PLAY[i];
+  header(`Spiel ${i + 1} von ${N}`, unlocked.length, i);
+  $("#gTitle").textContent = g.title;
+  $("#gHint").textContent = g.hint;
+  renderTray(false);
+  const el = $("#game");
+  el.innerHTML = "";
+  let finished = false;
+  const win = (delay = 700) => {
+    if (finished) return;
+    finished = true;
+    later(() => unlock(i), delay);
+  };
+  cleanupFn = g.run(el, win, WORDS[ORDER[i]]) || null;
+}
+function unlock(i) {
+  unlocked.push(ORDER[i]);
+  stage = i + 1;
+  save();
+  showReveal();
+}
+function showReveal() {
+  clearGame();
+  show("reveal");
+  const n = unlocked.length;
+  header(`Wort ${n} von ${N}`, n, -1);
+  const big = $("#bigWord");
+  big.textContent = WORDS[unlocked[n - 1]];
+  big.classList.remove("pop"); void big.offsetWidth; big.classList.add("pop");
+  const left = N - n;
+  $("#revealText").textContent = left === 0 ? "Das war das letzte Wort. Jetzt kommt das Finale." : left === 1 ? "Noch ein Wort bis zum ganzen Satz." : `Noch ${left} Wörter bis zum ganzen Satz.`;
+  $("#next").textContent = left === 0 ? "Zum Finale" : "Nächstes Spiel";
+  $("#next").onclick = () => (left === 0 ? startSort() : runGame(n));
+  renderTray(true);
+  later(() => burst(big, 20), 250);
+}
+
+function startSort() {
+  clearGame();
+  show("sort");
+  header("Finale", N, -1);
+  let pool = shuffle([...Array(N).keys()]);
+  while (N > 1 && pool.every((w, i) => w === i)) pool = shuffle(pool);
+  const slots = Array(N).fill(null), locked = Array(N).fill(false);
+  const ans = $("#answer"), poolEl = $("#pool"), fb = $("#sortFb");
+  let busy = false;
+  fb.textContent = "";
+  function render(showWrong) {
+    ans.innerHTML = slots.map((w, j) => w === null
+      ? `<span class="slot-empty" aria-hidden="true"></span>`
+      : `<button type="button" class="chip${locked[j] ? " locked" : showWrong ? " wrong" : ""}" data-j="${j}"${locked[j] ? " disabled" : ""}>${esc(WORDS[w])}</button>`).join("");
+    poolEl.innerHTML = pool.map((w) => `<button type="button" class="chip" data-w="${w}">${esc(WORDS[w])}</button>`).join("");
+  }
+  function check() {
+    busy = true;
+    let ok = 0;
+    slots.forEach((w, j) => { if (w === j) { locked[j] = true; ok++; } });
+    if (ok === N) {
+      render(false);
+      fb.textContent = "Perfekt!";
+      burst(ans, 30); buzz(60);
+      later(finale, 1300);
+      return;
+    }
+    render(true);
+    ans.classList.remove("shake"); void ans.offsetWidth; ans.classList.add("shake");
+    fb.textContent = `${ok} von ${N} Wörtern stehen richtig. Die anderen fliegen zurück.`;
+    buzz(40);
+    later(() => {
+      slots.forEach((w, j) => { if (w !== null && !locked[j]) { pool.push(w); slots[j] = null; } });
+      ans.classList.remove("shake");
+      busy = false;
+      render(false);
+    }, 1100);
+  }
+  ans.onclick = (e) => {
+    const b = e.target.closest("[data-j]");
+    if (!b || busy) return;
+    const j = +b.dataset.j;
+    if (locked[j]) return;
+    pool.push(slots[j]);
+    slots[j] = null;
+    render(false);
+  };
+  poolEl.onclick = (e) => {
+    const b = e.target.closest("[data-w]");
+    if (!b || busy) return;
+    const w = +b.dataset.w, j = slots.indexOf(null);
+    if (j < 0) return;
+    slots[j] = w;
+    pool = pool.filter((x) => x !== w);
+    render(false);
+    buzz(6);
+    if (!slots.includes(null)) check();
+  };
+  $("#sortReset").onclick = () => {
+    if (busy) return;
+    slots.forEach((w, j) => { if (w !== null && !locked[j]) { pool.push(w); slots[j] = null; } });
+    render(false);
+  };
+  render(false);
+}
+
+function finale() {
+  clearGame();
+  done = true;
+  stage = N;
+  unlocked = [...ORDER];
+  save();
+  show("finale");
+  header("Geschafft", N, -1);
+  $("#finTitle").textContent = `Toll gemacht, ${CONFIG.kosename}!`;
+  $("#finSentence").textContent = CONFIG.satz;
+  burst($("#finTitle"), 30);
+  later(() => burst(document.querySelector(".fin-letter"), 30), 500);
+  later(() => burst($("#finTitle"), 24), 1100);
+}
+
+function showStart() {
+  clearGame();
+  show("start");
+  header("Bereit?", 0, -1);
+  const s = load();
+  const go = $("#go"), restart = $("#restart");
+  if (s && s.done) {
+    stage = N; unlocked = [...ORDER]; done = true;
+    go.textContent = "Satz nochmal ansehen";
+    go.onclick = finale;
+    restart.hidden = false;
+  } else if (s && s.stage > 0) {
+    stage = s.stage; unlocked = s.unlocked; done = false;
+    go.textContent = stage >= N ? "Weiter zum Finale" : `Weiter bei Spiel ${stage + 1}`;
+    go.onclick = () => (stage >= N ? startSort() : runGame(stage));
+    restart.hidden = false;
+  } else {
+    reset();
+    go.textContent = "Los geht's";
+    go.onclick = () => { reset(); runGame(0); };
+    restart.hidden = true;
+  }
+  restart.onclick = () => { reset(); wipe(); runGame(0); };
+}
+
+$("#startGreet").textContent = `Für dich, ${CONFIG.kosename}`;
+$("#again").onclick = () => { reset(); wipe(); runGame(0); };
+if (document.fonts && document.fonts.load) document.fonts.load('28px "Caveat"').catch(() => {});
+showStart();
+</script>
+</body>
+</html>
